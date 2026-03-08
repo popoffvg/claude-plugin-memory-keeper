@@ -1,0 +1,38 @@
+Analyze this conversation excerpt and classify it into one of four categories.
+Pay special attention to short user messages (even 1-5 words) — they often reveal important corrections or preferences.
+
+Categories:
+1. 'insight' — valuable debugging pattern, architectural decision, gotcha, or workflow optimization worth remembering
+2. 'task' — a development task intention captured from user prompts (implement, fix, refactor, add feature, etc.)
+3. 'agent_edit' — the user is correcting or improving the AI assistant's behavior, even if stated briefly:
+   - Editing CLAUDE.md, skills, hooks, agents, prompts, instructions
+   - Short directives like "always do X", "never do Y", "use X instead", "stop doing Z"
+   - Any correction about how Claude should behave, format output, or use tools
+4. 'none' — routine code changes, simple lookups, or nothing worth recording
+
+ONLY flag genuinely useful knowledge. For 'insight', look for:
+- Non-obvious debugging patterns or root causes
+- Architectural decisions with reasoning
+- Gotchas, pitfalls, or surprising behaviors
+- Workflow optimizations discovered through practice
+
+Conversation:
+---
+{conversation_text}
+---
+
+Respond with ONE of these JSON objects:
+
+For insight:
+{{"kind": "insight", "insight": "<concise 1-2 sentence description>", "topic": "<topic name>", "project": "<project name or 'general'>", "rationale": "<why this matters for future sessions>", "workflow": "<which workflow or activity this affects>"}}
+
+For task:
+{{"kind": "task", "title": "<max 10 words>", "description": "<one sentence>", "project": "<project or 'general'>", "rationale": "<why this task matters or what problem it solves>", "workflow": "<which part of the codebase or workflow this touches>"}}
+
+For agent_edit:
+{{"kind": "agent_edit", "insight": "<what behavior is being added/corrected, 1-2 sentences>", "topic": "<topic>", "improvement": "<concrete instruction Claude should follow in future sessions, starting with a verb e.g. Always/Never/Use/Check>", "rationale": "<why this correction matters>", "workflow": "<which workflow or context this applies to>"}}
+
+For nothing:
+{{"kind": "none"}}
+
+Respond ONLY with the JSON object, no other text.
