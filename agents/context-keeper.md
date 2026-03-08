@@ -23,9 +23,13 @@ Router for knowledge operations. Identify the intent, load the matching skill, e
 | "context check", check current session for insights          | `context-check`    |
 | "research X", "look into X", "find out about X"              | `context-research` |
 
+## Settings
+
+On first use, verify settings file exists at `~/.claude/memory-keeper.local.md`. If missing, ask the user to configure it (see plugin README). Read `insights_root` from its YAML frontmatter — all paths below use this value.
+
 ## QMD Collections
 
-- **Primary**: `ctx` — persistent insights in `~/ctx/insights/`
+- **Primary**: `ctx` — persistent insights in `<insights_root>/`
 - **Fallback**: `z-core` — Obsidian vault knowledge base
 
 Always search `ctx` first, then `z-core` if insufficient results.

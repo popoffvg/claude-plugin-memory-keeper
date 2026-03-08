@@ -16,7 +16,7 @@ Examples:
 
 ## Search Procedure
 
-1. Read `insights_root` from `~/.claude/memory-keeper.local.md` YAML frontmatter (default: `~/ctx/insights/`)
+1. Read `insights_root` from `~/.claude/memory-keeper.local.md` YAML frontmatter. If the file is missing, stop and ask the user to create it with the required settings (see plugin README).
 2. If no query → read and display `<insights_root>/INDEX.md`
 3. Use `mcp__qmd__search` with `collection: "ctx"` for keyword matching
 4. If few results → use `mcp__qmd__deep_search` with `collection: "ctx"` for semantic search

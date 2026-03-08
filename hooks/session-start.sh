@@ -36,7 +36,12 @@ load_config() {
   echo "$default"
 }
 
-INSIGHTS_ROOT=$(load_config "insights_root" "$HOME/ctx/insights")
+INSIGHTS_ROOT=$(load_config "insights_root" "")
+
+if [[ -z "$INSIGHTS_ROOT" ]]; then
+  log "WARN insights_root not configured in ~/.claude/memory-keeper.local.md, skipping"
+  exit 0
+fi
 
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOG_FILE" 2>/dev/null || true; }
 

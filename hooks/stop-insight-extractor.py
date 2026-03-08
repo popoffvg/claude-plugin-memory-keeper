@@ -45,7 +45,11 @@ def load_config() -> dict:
 
 
 _config = load_config()
-INSIGHTS_ROOT = os.path.expanduser(_config.get("insights_root", "~/ctx/insights"))
+if "insights_root" not in _config:
+    # No settings file or missing insights_root — skip silently
+    # User must create ~/.claude/memory-keeper.local.md with insights_root setting
+    pass
+INSIGHTS_ROOT = os.path.expanduser(_config.get("insights_root", ""))
 
 from logging.handlers import RotatingFileHandler
 handler = RotatingFileHandler(
@@ -270,6 +274,10 @@ def main():
     log.debug("Extracted text:\n%s", conversation_text[:3000])
     if not conversation_text or len(conversation_text) < 50:
         log.info("Conversation too short (%d chars), skipping", len(conversation_text or ""))
+        sys.exit(0)
+
+    if not INSIGHTS_ROOT:
+        log.warning("insights_root not configured in ~/.claude/memory-keeper.local.md, skipping")
         sys.exit(0)
 
     log.info("Analyzing %d chars of conversation", len(conversation_text))

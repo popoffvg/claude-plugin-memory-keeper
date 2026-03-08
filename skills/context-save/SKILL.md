@@ -26,7 +26,7 @@ Every note has a `type:` field in frontmatter:
 
 ## Configuration
 
-Read `insights_root` from `~/.claude/memory-keeper.local.md` YAML frontmatter. Default: `~/ctx/insights/`.
+Read `insights_root` from `~/.claude/memory-keeper.local.md` YAML frontmatter. If the file is missing, stop and ask the user to create it with the required settings (see plugin README).
 
 ## Storage
 

@@ -9,6 +9,49 @@ Persistent knowledge management plugin for [Claude Code](https://docs.anthropic.
 - **Dual search**: Keyword-first, then semantic search across your knowledge base (via QMD)
 - **Web research**: Falls back to web search when local memory is insufficient, then persists findings
 
+## Setup
+
+### 1. Install the plugin
+
+```bash
+claude plugin install popoffvg/claude-plugin-memory-keeper
+```
+
+### 2. Create the settings file
+
+Create `~/.claude/memory-keeper.local.md` with your configuration:
+
+```yaml
+---
+insights_root: ~/my/insights/path
+log_level: DEBUG
+---
+```
+
+**This file is required.** The plugin will not function without it — hooks will skip and skills will prompt you to create it.
+
+### 3. Create the insights directory
+
+```bash
+mkdir -p ~/my/insights/path
+```
+
+### 4. Verify
+
+Start a new Claude Code session. The SessionStart hook should load without errors. Run `/context find` — it should read your insights root.
+
+| Setting | Required | Description |
+|---------|----------|-------------|
+| `insights_root` | **Yes** | Root directory for all saved knowledge (e.g. `~/ctx/insights`) |
+| `log_level` | No | Logging verbosity for hooks (`DEBUG`, `INFO`, `WARN`). Default: `DEBUG` |
+
+## Requirements
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
+- [QMD MCP server](https://github.com/nicobailey/qmd) — local search engine over markdown documents
+- `ANTHROPIC_API_KEY` env var — used by the stop hook for Haiku classification
+- (Optional) [Firecrawl MCP](https://github.com/mendableai/firecrawl) — for web research fallback
+
 ## Commands
 
 | Command | Description |
@@ -22,50 +65,29 @@ Persistent knowledge management plugin for [Claude Code](https://docs.anthropic.
 ## How It Works
 
 ### Session Start
-1. Reads config from `~/.claude/memory-keeper.local.md`
-2. Matches current directory to a project in `~/ctx/insights/`
-3. Loads `_summary.md` (or `INDEX.md` fallback) into session context
+1. Reads `insights_root` from `~/.claude/memory-keeper.local.md`
+2. If not configured — skips silently
+3. Matches current directory to a project in `<insights_root>/`
+4. Loads `_summary.md` (or `INDEX.md` fallback) into session context
 
 ### Session End
-1. Extracts last messages from conversation
-2. Sends to Haiku for classification: `insight` | `task` | `agent_edit` | `none`
-3. Saves to the appropriate location:
-   - **Insights** -> `~/ctx/insights/<project>/insights.md`
-   - **Tasks** -> `~/ctx/insights/_tasks/pending.md`
-   - **Agent edits** -> `~/ctx/insights/claude-config/behavior.md`
+1. Reads `insights_root` from settings — skips if not configured
+2. Extracts last messages from conversation
+3. Sends to Haiku for classification: `insight` | `task` | `agent_edit` | `none`
+4. Saves to the appropriate location:
+   - **Insights** -> `<insights_root>/<project>/insights.md`
+   - **Tasks** -> `<insights_root>/_tasks/pending.md`
+   - **Agent edits** -> `<insights_root>/claude-config/behavior.md`
 
 ### Knowledge Search
 1. `mcp__qmd__search` (keyword) on `ctx` collection
 2. `mcp__qmd__deep_search` (semantic) if results are sparse
 3. Fallback to `z-core` collection (Obsidian vault)
 
-## Requirements
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
-- [QMD MCP server](https://github.com/nicobailey/qmd) — local search engine over markdown documents
-- `ANTHROPIC_API_KEY` env var — used by the stop hook for Haiku classification
-- (Optional) [Firecrawl MCP](https://github.com/mendableai/firecrawl) — for web research fallback
-
-## Configuration
-
-Create `~/.claude/memory-keeper.local.md` with YAML frontmatter:
-
-```yaml
----
-insights_root: ~/ctx/insights
-log_level: DEBUG
----
-```
-
-| Field | Default | Description |
-|-------|---------|-------------|
-| `insights_root` | `~/ctx/insights` | Root directory for all saved knowledge |
-| `log_level` | `DEBUG` | Logging verbosity for the stop hook |
-
 ## Knowledge Structure
 
 ```
-~/ctx/insights/
+<insights_root>/
   INDEX.md              # Global knowledge index
   <project>/
     _summary.md         # Project summary (loaded on session start)
@@ -74,12 +96,6 @@ log_level: DEBUG
     pending.md          # Extracted task items
   claude-config/
     behavior.md         # Agent behavior corrections
-```
-
-## Installation
-
-```bash
-claude plugin install popoffvg/claude-plugin-memory-keeper
 ```
 
 ## License
