@@ -2,8 +2,8 @@
   "hooks": {
     "Stop": [
       {
-        "type": "command",
-        "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/stop-insight-extractor.py"
+        "type": "agent",
+        "prompt": "Read `insights_root` from `~/.claude/memory-keeper.local.md` YAML frontmatter. If the file is missing or `insights_root` is not set, do nothing and stop immediately.\n\nAnalyze the conversation that just happened. Classify it into one of four categories:\n\n1. **insight** — valuable debugging pattern, architectural decision, gotcha, or workflow optimization\n2. **task** — a development task intention (implement, fix, refactor, add feature)\n3. **agent_edit** — user correcting AI behavior (editing CLAUDE.md, skills, hooks, short directives like 'always do X')\n4. **none** — routine code changes, simple lookups, nothing worth recording\n\nONLY flag genuinely useful knowledge. For insights, look for:\n- Non-obvious debugging patterns or root causes\n- Architectural decisions with reasoning\n- Gotchas, pitfalls, or surprising behaviors\n- Workflow optimizations discovered through practice\n\nIf classification is **none**, stop.\n\nOtherwise, save to the appropriate location under `<insights_root>`:\n\n- **insight**: Append to `<insights_root>/<project>/insights.md` with format:\n  `## <topic> — YYYY-MM-DD HH:MM\\n<concise 1-2 sentence description>\\n_(cwd: <cwd>)_`\n\n- **task**: Append to `<insights_root>/_tasks/pending.md` with format:\n  `## <title>\\n- **Description**: <one sentence>\\n- **Project**: <project>\\n- **Captured**: YYYY-MM-DD HH:MM`\n\n- **agent_edit**: Append to `<insights_root>/claude-config/behavior.md` with format:\n  `## <topic> — YYYY-MM-DD HH:MM\\n<what behavior is being corrected>\\n- **Improvement**: <concrete instruction starting with a verb>`\n\nCreate directories as needed. Derive `<project>` from the current working directory name. Be concise — one entry per session, max 3 lines."
       }
     ],
     "SessionStart": [

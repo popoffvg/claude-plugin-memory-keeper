@@ -43,13 +43,12 @@ Start a new Claude Code session. The SessionStart hook should load without error
 | Setting | Required | Description |
 |---------|----------|-------------|
 | `insights_root` | **Yes** | Root directory for all saved knowledge (e.g. `~/ctx/insights`) |
-| `log_level` | No | Logging verbosity for hooks (`DEBUG`, `INFO`, `WARN`). Default: `DEBUG` |
+| `log_level` | No | Logging verbosity for SessionStart hook (`DEBUG`, `INFO`, `WARN`). Default: `DEBUG` |
 
 ## Requirements
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
 - [QMD MCP server](https://github.com/nicobailey/qmd) — local search engine over markdown documents
-- `ANTHROPIC_API_KEY` env var — used by the stop hook for Haiku classification
 - (Optional) [Firecrawl MCP](https://github.com/mendableai/firecrawl) — for web research fallback
 
 ## Commands
@@ -72,9 +71,8 @@ Start a new Claude Code session. The SessionStart hook should load without error
 
 ### Session End
 1. Reads `insights_root` from settings — skips if not configured
-2. Extracts last messages from conversation
-3. Sends to Haiku for classification: `insight` | `task` | `agent_edit` | `none`
-4. Saves to the appropriate location:
+2. Agent analyzes the conversation and classifies it: `insight` | `task` | `agent_edit` | `none`
+3. Saves to the appropriate location:
    - **Insights** -> `<insights_root>/<project>/insights.md`
    - **Tasks** -> `<insights_root>/_tasks/pending.md`
    - **Agent edits** -> `<insights_root>/claude-config/behavior.md`
