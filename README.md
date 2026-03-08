@@ -60,6 +60,17 @@ Start a new Claude Code session. The SessionStart hook should load without error
 | `/context save <note>` | Persist a specific insight or fact |
 | `/context check` | Analyze current session for insights worth saving |
 | `/context research <topic>` | Search memory + web, then persist results |
+| `/context scan [timeframe]` | Scan recent session logs for missed insights (fallback for failed Stop hooks) |
+
+## Hourly Scan (Cron)
+
+To enable automatic scanning for missed insights during a session, run:
+
+```
+/context scan cron
+```
+
+This sets up a session-scoped hourly cron that runs `/context scan` automatically. The cron lives only in the current Claude session and auto-expires after 3 days.
 
 ## How It Works
 
