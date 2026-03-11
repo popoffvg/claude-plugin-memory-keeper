@@ -52,7 +52,13 @@ Only flag genuinely useful knowledge. Look for:
 
 If classification is **none**, skip that session.
 
-### Step 4: Save insights
+### Step 4: Deduplicate and save insights
+
+Before saving, read the target file and check for duplicates:
+- **Exact match**: skip if the same topic heading already exists
+- **Semantic overlap**: skip if an existing entry covers the same fact in different words
+- **Superset**: if the new insight is broader, replace the old entry
+- **Subset**: if an existing entry is already broader, skip
 
 For each non-none session, use the `context-save` skill procedure:
 
@@ -60,7 +66,9 @@ For each non-none session, use the `context-save` skill procedure:
 - **task** → append to `<insights_root>/_tasks/pending.md`
 - **agent_edit** → append to `<insights_root>/claude-config/behavior.md`
 
-Derive `<project>` from the session's `cwd` field (basename of the working directory).
+Derive `<project>` from the session's `cwd` field: run `git -C <cwd> rev-parse --show-toplevel 2>/dev/null` and take the basename. If not a git repo, use basename of cwd.
+
+If there is an active task in `<insights_root>/_tasks/pending.md` (status: active), insights go to `<insights_root>/_tasks/<task-slug>/notes.md` with `_(repo: <project>)_` tag. Add `<project>` to the task's `Repos` list if not already there.
 
 ### Step 5: Mark as scanned
 

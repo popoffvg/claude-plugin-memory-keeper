@@ -23,6 +23,7 @@ Router for knowledge operations. Identify the intent, load the matching skill, e
 | "context check", check current session for insights          | `context-check`    |
 | "research X", "look into X", "find out about X"              | `context-research` |
 | "context scan", "scan sessions", "check old sessions"         | `context-scan`     |
+| "work done", "context done", "task done", "finish task"       | `context-done`     |
 
 ## Settings
 

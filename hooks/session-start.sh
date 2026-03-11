@@ -54,20 +54,48 @@ CONTEXT=""
 
 # --- Find project summary from insights ---
 if [[ -n "$CWD" && -d "$INSIGHTS_ROOT" ]]; then
-  CWD_LOWER=$(echo "$CWD" | tr '[:upper:]' '[:lower:]')
+  # Detect project from git repo name, fallback to cwd basename
+  GIT_ROOT=$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null || true)
+  if [[ -n "$GIT_ROOT" ]]; then
+    DETECTED_PROJECT=$(basename "$GIT_ROOT")
+  else
+    DETECTED_PROJECT=$(basename "$CWD")
+  fi
+  DETECTED_LOWER=$(echo "$DETECTED_PROJECT" | tr '[:upper:]' '[:lower:]')
+  log "INFO Detected project: $DETECTED_PROJECT"
+
+  # Try exact match first, then substring match
   for PROJECT_DIR in "$INSIGHTS_ROOT"/*/; do
     [[ -d "$PROJECT_DIR" ]] || continue
     PROJECT=$(basename "$PROJECT_DIR")
     PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
-    if [[ "$CWD_LOWER" == *"$PROJECT_LOWER"* ]]; then
+    if [[ "$DETECTED_LOWER" == "$PROJECT_LOWER" ]]; then
       SUMMARY="$PROJECT_DIR/_summary.md"
       if [[ -f "$SUMMARY" ]]; then
         CONTEXT=$(cat "$SUMMARY")
-        log "INFO Matched project '$PROJECT' for cwd '$CWD'"
+        log "INFO Exact match project '$PROJECT' for '$DETECTED_PROJECT'"
         break
       fi
     fi
   done
+
+  # Fallback: substring match on full cwd path
+  if [[ -z "$CONTEXT" ]]; then
+    CWD_LOWER=$(echo "$CWD" | tr '[:upper:]' '[:lower:]')
+    for PROJECT_DIR in "$INSIGHTS_ROOT"/*/; do
+      [[ -d "$PROJECT_DIR" ]] || continue
+      PROJECT=$(basename "$PROJECT_DIR")
+      PROJECT_LOWER=$(echo "$PROJECT" | tr '[:upper:]' '[:lower:]')
+      if [[ "$CWD_LOWER" == *"$PROJECT_LOWER"* ]]; then
+        SUMMARY="$PROJECT_DIR/_summary.md"
+        if [[ -f "$SUMMARY" ]]; then
+          CONTEXT=$(cat "$SUMMARY")
+          log "INFO Substring match project '$PROJECT' for cwd '$CWD'"
+          break
+        fi
+      fi
+    done
+  fi
 fi
 
 # --- Fallback: INDEX.md ---

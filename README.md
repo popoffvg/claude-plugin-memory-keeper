@@ -61,6 +61,7 @@ Start a new Claude Code session. The SessionStart hook should load without error
 | `/context check` | Analyze current session for insights worth saving |
 | `/context research <topic>` | Search memory + web, then persist results |
 | `/context scan [timeframe]` | Scan recent session logs for missed insights (fallback for failed Stop hooks) |
+| `/context done [task-name]` | Complete active task — summarize insights and distribute to repo folders |
 
 ## Hourly Scan (Cron)
 
@@ -80,13 +81,25 @@ This sets up a session-scoped hourly cron that runs `/context scan` automaticall
 3. Matches current directory to a project in `<insights_root>/`
 4. Loads `_summary.md` (or `INDEX.md` fallback) into session context
 
+### Project Detection
+Project name is derived from the **git repo name** (`git rev-parse --show-toplevel | basename`), falling back to the working directory basename.
+
 ### Session End
 1. Reads `insights_root` from settings — skips if not configured
-2. Agent analyzes the conversation and classifies it: `insight` | `task` | `agent_edit` | `none`
-3. Saves to the appropriate location:
-   - **Insights** -> `<insights_root>/<project>/insights.md`
-   - **Tasks** -> `<insights_root>/_tasks/pending.md`
+2. Detects project from git repo name (fallback: cwd basename)
+3. Checks for an active task in `_tasks/pending.md`
+4. Agent analyzes the conversation and classifies it: `insight` | `task` | `agent_edit` | `none`
+5. Saves to the appropriate location:
+   - **Insights (with active task)** -> `<insights_root>/_tasks/<task-slug>/notes.md` (tagged with repo name)
+   - **Insights (no active task)** -> `<insights_root>/<project>/insights.md`
+   - **Tasks** -> `<insights_root>/_tasks/pending.md` + creates `_tasks/<task-slug>/` directory
    - **Agent edits** -> `<insights_root>/claude-config/behavior.md`
+
+### Task Completion (`/context done`)
+1. Reads task insights from `_tasks/<task-slug>/notes.md`
+2. Generates a concise summary
+3. Distributes summary to each repo's `<insights_root>/<repo>/insights.md`
+4. Marks task as `done` in `pending.md`
 
 ### Knowledge Search
 1. `mcp__qmd__search` (keyword) on `ctx` collection
@@ -98,11 +111,13 @@ This sets up a session-scoped hourly cron that runs `/context scan` automaticall
 ```
 <insights_root>/
   INDEX.md              # Global knowledge index
-  <project>/
+  <project>/            # project = git repo name or folder name
     _summary.md         # Project summary (loaded on session start)
-    insights.md         # Auto-captured insights
+    insights.md         # Auto-captured insights + task summaries
   _tasks/
-    pending.md          # Extracted task items
+    pending.md          # Task list (status: active | done)
+    <task-slug>/        # Per-task directory
+      notes.md          # Insights collected during task (tagged with repo names)
   claude-config/
     behavior.md         # Agent behavior corrections
 ```
