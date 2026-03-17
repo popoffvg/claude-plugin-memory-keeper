@@ -5,45 +5,56 @@ description: This skill should be used when the user says "context check", "chec
 
 # Context Check
 
-Analyze the recent conversation transcript to detect valuable insights, learnings, patterns, debugging discoveries, architectural decisions, or corrections worth remembering for future sessions.
+Analyze the recent conversation to detect facts worth persisting.
 
 ## Usage
 
 `/context check`
 
-## What to look for
+## What to extract
 
-Scan the last 10 human/assistant messages for:
-- Non-obvious debugging patterns or root causes
-- Architectural decisions with reasoning
-- Gotchas, pitfalls, or surprising behaviors
-- Workflow optimizations discovered through practice
-- Corrections the user made that reveal preferences or conventions
+Scan the last 10 human/assistant messages for concrete facts in these categories:
 
-Only flag genuinely useful knowledge — not routine code changes, simple fixes, or standard operations.
+**insight** — completed work:
+- Code changes with context (what was done + why)
+- Patterns applied or techniques used
+- Gotchas, pitfalls, or surprising behaviors discovered
+- Decisions made with reasoning
+
+**agent_edit** — AI behavior changes:
+- Agent guards, skill descriptions, hook logic edits
+- Prompt template changes
+- CLAUDE.md or plugin config updates
+- Directives that control how the assistant works
+
+**task** — ONLY unstarted intentions:
+- "I need to refactor X", "TODO: add Y"
+- Work the user plans but has NOT begun
+
+## Fact quality
+
+Good facts (concise, high-level, with WHY):
+- "ContextDomain is a new field for matching block outputs by domain context"
+- "guard findSessionJsonl against undefined sessionId — was matching real files"
+- "skills should describe pure workflow steps — moved delegation details to agent frontmatter"
+
+Bad facts (skip these):
+- Too granular: "added field to BObjectSpec" (what is it FOR?)
+- Too vague: "fixed authentication issues"
+- Routine: "ran tests", "committed code", "read a file"
+- Reasoning: "this is because...", "the issue stems from..."
 
 ## Process
 
 1. Read the current session transcript
-2. Extract recent conversation text
-3. Identify concrete facts only — do NOT include reasoning or analysis narrative. Report:
-   - What the user did (tool call, code change, command run)
-   - What the user corrected ("I did X, user said do Y instead")
-   - Observed behavior or outcome (error message, test result, config that worked)
-   - Keep each item as a single factual statement, no interpretation
-4. If facts are found, present them as a flat list and ask the user whether to save
-5. If user agrees, use the `context-save` skill to persist it
+2. Extract facts grouped by topic and classification
+3. Save immediately using the `context-save` skill — do NOT ask for confirmation
 
 ## Configuration
 
-Read `insights_root` from `~/.claude/memory-keeper.local.md` YAML frontmatter. If the file is missing, stop and ask the user to create it with the required settings (see plugin README).
-
-## Storage Location
-
-All insights are stored in `<insights_root>/` using QMD MCP for indexing and search.
+Read `insights_root` from `~/.claude/memory-keeper.local.md` YAML frontmatter.
 
 ## Output
 
-If no insights are found, return a simple confirmation.
-
-If insights are found, present the insight and ask whether to save it to the insights knowledge base.
+If no facts found, return "nothing worth saving".
+If facts found, save them immediately and report what was saved (topic + classification + file).

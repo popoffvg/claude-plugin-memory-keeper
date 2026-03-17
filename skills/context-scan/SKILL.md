@@ -35,24 +35,24 @@ For each unscanned session JSONL file:
 3. For `assistant` messages: extract text blocks from `message.content` array (where `block.type == "text"`)
 4. Build a conversation transcript (max 4000 chars per session, take last N messages that fit)
 
-### Step 3: Classify and extract
+### Step 3: Classify and extract facts
 
-For each session transcript, classify it into one of:
+For each session, extract entries grouped by topic. Each entry has:
 
-- **insight** — valuable debugging pattern, architectural decision, gotcha, workflow optimization
-- **task** — development task intention (implement, fix, refactor)
-- **agent_edit** — user correcting AI behavior
-- **none** — routine, nothing worth recording
+- **classification**: `insight` | `agent_edit` | `task` | `none`
+- **repo**: repository basename from the projects dir path (last segment of encoded path)
+- **topic**: short title (3-6 words)
+- **facts**: 1-3 bullet points, each = WHAT changed + WHY
 
-Only flag genuinely useful knowledge. Look for:
-- Non-obvious debugging patterns or root causes
-- Architectural decisions with reasoning
-- Gotchas, pitfalls, or surprising behaviors
-- Workflow optimizations discovered through practice
+Classifications:
+- `insight`: completed work — code changes, patterns applied, decisions made, gotchas
+- `agent_edit`: changes to AI behavior — agent guards, skill descriptions, hook logic, prompts, plugin config
+- `task`: ONLY unstarted intentions (NOT completed work)
+- `none`: routine, skip
 
-If classification is **none**, skip that session.
+One session may produce multiple entries with different classifications.
 
-### Step 4: Deduplicate and save insights
+### Step 4: Deduplicate and save
 
 Before saving, read the target file and check for duplicates:
 - **Exact match**: skip if the same topic heading already exists
@@ -60,15 +60,16 @@ Before saving, read the target file and check for duplicates:
 - **Superset**: if the new insight is broader, replace the old entry
 - **Subset**: if an existing entry is already broader, skip
 
-For each non-none session, use the `context-save` skill procedure:
+Save locations:
+- `insight` → `<insights_root>/<repo>/insights.md` (or `_tasks/<slug>/notes.md` if active task)
+- `agent_edit` → `<insights_root>/claude-config/behavior.md`
+- `task` → `<insights_root>/_tasks/pending.md`
 
-- **insight** → append to `<insights_root>/<project>/insights.md`
-- **task** → append to `<insights_root>/_tasks/pending.md`
-- **agent_edit** → append to `<insights_root>/claude-config/behavior.md`
-
-Derive `<project>` from the session's `cwd` field: run `git -C <cwd> rev-parse --show-toplevel 2>/dev/null` and take the basename. If not a git repo, use basename of cwd.
-
-If there is an active task in `<insights_root>/_tasks/pending.md` (status: active), insights go to `<insights_root>/_tasks/<task-slug>/notes.md` with `_(repo: <project>)_` tag. Add `<project>` to the task's `Repos` list if not already there.
+Entry format:
+```
+## <topic> — <YYYY-MM-DD HH:MM>
+- <fact with context>
+```
 
 ### Step 5: Mark as scanned
 
@@ -78,6 +79,6 @@ Append each processed session filename to `<insights_root>/.scanned_sessions` (o
 
 Report:
 - Number of sessions scanned
-- Number of insights found and saved
-- Brief list of what was saved (topic + type)
+- Number of entries found and saved (by classification)
+- Brief list of what was saved (topic + classification)
 - "No new insights" if nothing found
